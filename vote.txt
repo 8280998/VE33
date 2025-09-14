@@ -1,0 +1,4 @@
+私匙1|对应的NFTID
+私匙2|对应的NFTID
+私匙3|对应的NFTID
+私匙4|对应的NFTID
