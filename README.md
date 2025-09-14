@@ -15,9 +15,13 @@
 
 
 ## 3 运行脚本
+运行前，先确定哪个投票交易对，取得data后并复制到程序中进行解析。所有投票地址将对这个交易对池投票。如下边示图
 
     python3 voters.py
     
+## 4 运行截图如下
+
+<img width="1988" height="1226" alt="image" src="https://github.com/user-attachments/assets/ce741dc2-67a6-4157-a8e0-02385cd9da71" />
 
 
 
