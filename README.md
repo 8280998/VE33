@@ -1,7 +1,7 @@
 # VE33_tools
-支持op网络的velo和base的aero批量投票,批量领取奖励
+支持op网络的velo和base的aero批量投票,批量领取奖励。批量领取奖励当前仅配置了BASE的AERO项目并测试通过。OP的VELO代码还没完善
 
-Supports batch voting for OP's Velo and Base's Aero, and batch  claim rewards
+Supports batch voting for OP's Velo and Base's Aero, and batch  claim rewards。Currently, only BASE's AERO project has been configured and tested for batch rewards. OP's VELO code is not yet complete.
 
 ## 无责声明：本程序为明文代码，运行前请先审核代码安全性。确定使用后，运行时产生任何损失均与本代码无关
 ## Disclaimer: This program is plain text code. Please review the code security before running it. After confirming your use, any losses incurred during operation are not related to this code.
@@ -18,13 +18,18 @@ Supports batch voting for OP's Velo and Base's Aero, and batch  claim rewards
 
 0x123456....|1234
 
+## 3 config.json配置说明
 
-## 3 运行脚本
+经过研究，BASE链的AERO领取投票奖励，是通过投票合约0x16613524e02ad97eDfeF371bC883F2F5d6C480A5调用其他代币奖励合约进行领取。但投票合约上没有查询所有奖励代币和数量的功能，只有领取奖励功能。查询投票所得代币和数量是在调用其他合约来完成。因此需要在config.json配置已知的调用合约，包括BribeVotingReward和FeesVotingReward。把已知的调用合约补充到config.json，命名如下截图所示。
+<img width="918" height="398" alt="image" src="https://github.com/user-attachments/assets/ead8a3c8-ec1c-459d-8be7-ecb9e6f297c6" />
+
+
+## 4 运行脚本
 运行前，先确定哪个投票交易对，取得data后并复制到程序中进行解析。所有投票地址将对这个交易对池投票。如下边示图
 
     python3 ve33_tools.py
     
-## 4 运行截图如下
+## 5 运行截图如下
 
 voters.py只有投票功能运行：
 <img width="1988" height="1226" alt="image" src="https://github.com/user-attachments/assets/ce741dc2-67a6-4157-a8e0-02385cd9da71" />
