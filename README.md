@@ -20,12 +20,12 @@ Supports batch voting for OP's Velo and Base's Aero, and batch  claim rewards。
 
 ## 3 config.json配置说明
 
-经过研究，BASE链的AERO领取投票奖励，是通过投票合约0x16613524e02ad97eDfeF371bC883F2F5d6C480A5调用其他代币奖励合约进行领取。但投票合约上没有查询所有奖励代币和数量的功能，只有领取奖励功能。查询投票所得代币和数量是在调用其他合约来完成。因此需要在config.json配置已知的调用合约，包括BribeVotingReward和FeesVotingReward。把已知的调用合约补充到config.json，命名如下截图所示。
+经过研究，BASE链的AERO领取投票奖励，是通过投票合约0x16613524e02ad97eDfeF371bC883F2F5d6C480A5调用其他代币奖励合约进行领取。但投票合约上没有查询所有奖励代币和数量的功能，只有领取奖励功能。查询投票所得代币和数量是在调用其他合约来完成。因此需要在config.json配置已知的调用合约，包括BribeVotingReward和FeesVotingReward。把已知的调用合约补充到config.json，命名如下截图所示。并且每个地址所得的投票奖励代币和数量都不同的话，需要调用合约来获取并传递给主投票合约领取。
 <img width="918" height="398" alt="image" src="https://github.com/user-attachments/assets/ead8a3c8-ec1c-459d-8be7-ecb9e6f297c6" />
 
 
 ## 4 运行脚本
-运行前，先确定哪个投票交易对，取得data后并复制到程序中进行解析。所有投票地址将对这个交易对池投票。如下边示图
+运行前，先确定BASE或OP网络，及哪个投票交易对，取得data后并复制到程序中进行解析。所有投票地址将对这个交易对池投票。如下边示图
 
     python3 ve33_tools.py
     
