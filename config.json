@@ -9,7 +9,8 @@
         "BribeVotingReward3": "0xd6a164905a05bcf4fa0b658a23c92882da66ac19",
         "BribeVotingReward4": "0x685b5173e002b2ec55a8cd02c74d5ee77043eb1e",
         "BribeVotingReward5": "0xb30f5119022ed23267f5680b6b0cbf8c84598106",
-        "BribeVotingReward6": "0xf6a131d91ea1be48f5e702c5f74806e0299a4941"
+        "BribeVotingReward6": "0xf6a131d91ea1be48f5e702c5f74806e0299a4941",
+        "BribeVotingReward7": "0x1007b52921268b7ff21a6889210305b552aabe3c"
       },
       "fees_voting_rewards": {
         "FeesVotingReward1": "0x7798c136e0c000b8bffdc2fe4e208039320f0b62",
@@ -17,7 +18,8 @@
         "FeesVotingReward3": "0x4706d84ce4d2c515d69543a4399ed637a10de869",
         "FeesVotingReward4": "0x48300e424e91cdb2cfc0b0b2f82ca015bb7b4407",
         "FeesVotingReward5": "0xfcb9b6983ae4ef935bf482b26de54e6ca16aea1f",
-        "FeesVotingReward6": "0xf7bcdbcfc66793b019be121800282da62f7925d7"
+        "FeesVotingReward6": "0xf7bcdbcfc66793b019be121800282da62f7925d7",
+        "FeesVotingReward7": "0xe5bfd74792d553d63bb0c89053561988cb9b4804"
       }
     },
     "Optimism": {
