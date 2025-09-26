@@ -22,7 +22,7 @@
         "FeesVotingReward7": "0xe5bfd74792d553d63bb0c89053561988cb9b4804"
       }
     },
-    "Optimism": {
+    "OP": {
       "vote_contract": "0x41c914ee0c7e1a5edcd0295623e6dc557b5abf3c",
       "rpc_url": "https://mainnet.optimism.io",
       "bribe_voting_rewards": {
