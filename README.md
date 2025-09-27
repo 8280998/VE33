@@ -43,9 +43,13 @@ Supports batch voting for OP's Velo and Base's Aero, and batch  claim rewards。
     
 ## 5 运行截图如下
 
-voters.py只有投票功能运行：
+voters.py只有投票模块运行时：
 <img width="1988" height="1226" alt="image" src="https://github.com/user-attachments/assets/ce741dc2-67a6-4157-a8e0-02385cd9da71" />
 
-ve33_tools添加领取奖励功能运行：
+ve33_tools添加领取奖励模块运行时：
 <img width="1420" height="1374" alt="image" src="https://github.com/user-attachments/assets/02cfec47-f58e-4697-aa73-d54babac6d7a" />
+
+增加Rebase模块的运行时
+<img width="1376" height="1056" alt="image" src="https://github.com/user-attachments/assets/dd0890c1-1548-412b-a199-c3987a9ed65e" />
+
 
