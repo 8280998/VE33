@@ -6,6 +6,12 @@ Supports batch voting for OP's Velo and Base's Aero, and batch  claim rewards。
 ## 无责声明：本程序为明文代码，运行前请先审核代码安全性。确定使用后，运行时产生任何损失均与本代码无关
 ## Disclaimer: This program is plain text code. Please review the code security before running it. After confirming your use, any losses incurred during operation are not related to this code.
 
+
+## 使用说明：
+### 1 投票需要取得inputdata，并粘贴到data框，由程序解析出投票对象地址。点击投票按钮后执行。（当前已支持OP的VELO和BASE的AERO）
+### 2 领取需要指定代币的合约，如果vote.txt地址没有这个奖励，程序自动跳过。（当前只支持BASE的AERO投票奖励领取，OP网络的VELO投票奖励还没完善）
+### 3 Rebase无需填写任何，程序读取vote.txt地址后自动执行。（当前只支持BASE的AERO奖励，OP网络的VELO奖励还没完善）
+
 ## 1 安装支持环境
 安装 Python，tkinter（GUI 库）， web3（区块链交互库）
 
