@@ -38,6 +38,8 @@ ABI_CLAIM = [
 # 合约地址
 OP_CONTRACT = "0x41c914ee0c7e1a5edcd0295623e6dc557b5abf3c"
 BASE_CONTRACT = "0x16613524e02ad97eDfeF371bC883F2F5d6C480A5"
+REBASE_CONTRACT_OP = "0x9d4736ec60715e71afe72973f7885dcbc21ea99b"
+REBASE_CONTRACT_BASE = "0x227f65131a261548b057215bb1d5ab2997964c7d"
 
 # RPC 端点
 OP_RPC = "https://mainnet.optimism.io"
@@ -181,6 +183,38 @@ def send_claim(private_key, tokenId, token_address, w3, vote_contract, reward_co
     except Exception as e:
         return f"错误: {str(e)}"
 
+def send_rebase(private_key, tokenId, w3, contract_address, user_gas):
+    try:
+        account = w3.eth.account.from_key(private_key)
+        nonce = w3.eth.get_transaction_count(account.address)
+        
+        data = "0x379607f5" + hex(tokenId)[2:].zfill(64)
+        
+        tx = {
+            'to': w3.to_checksum_address(contract_address),
+            'value': 0,
+            'gasPrice': w3.eth.gas_price,
+            'nonce': nonce,
+            'data': data,
+            'chainId': w3.eth.chain_id
+        }
+        estimated_gas = w3.eth.estimate_gas(tx)
+        if user_gas:
+            tx['gas'] = user_gas
+        else:
+            tx['gas'] = int(estimated_gas * 1.2)
+        
+        signed_tx = w3.eth.account.sign_transaction(tx, private_key)
+        tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+        receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+        
+        if receipt['status'] == 1:
+            return f"成功: {tx_hash.hex()}"
+        else:
+            return f"失败: {tx_hash.hex()} - 原因: 交易回滚"
+    except Exception as e:
+        return f"错误: {str(e)}"
+
 # 获取当前估算 gas limit 的函数（使用有效 dummy calldata）
 def get_estimated_gas_limit(network):
     if network == "OP":
@@ -213,7 +247,7 @@ def get_estimated_gas_limit(network):
 class VoteGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("VE33_Tools")
+        self.root.title("Ve33_Tools")
         self.root.geometry("600x500")
         self.root.configure(bg="#f0f0f0")
         
@@ -253,8 +287,9 @@ class VoteGUI:
         
         # 批量按钮
         button_frame = tk.Frame(root, bg="#f0f0f0")
-        tk.Button(button_frame, text="开始批量投票", command=self.batch_vote, font=("Arial", 12)).pack(side=tk.LEFT, padx=10)
-        tk.Button(button_frame, text="开始批量领取", command=self.batch_claim, font=("Arial", 12)).pack(side=tk.LEFT, padx=10)
+        tk.Button(button_frame, text="投票", command=self.batch_vote, font=("Arial", 12)).pack(side=tk.LEFT, padx=10)
+        tk.Button(button_frame, text="领取", command=self.batch_claim, font=("Arial", 12)).pack(side=tk.LEFT, padx=10)
+        tk.Button(button_frame, text="Rebases", command=self.batch_rebases, font=("Arial", 12)).pack(side=tk.LEFT, padx=10)
         button_frame.pack(pady=10)
         
         # 日志
@@ -390,6 +425,55 @@ class VoteGUI:
         
         # 输出到 CSV 文件
         self.export_to_csv(results, filename="claim_results.csv")
+    
+    def batch_rebases(self):
+        if not self.votes:
+            messagebox.showwarning("警告", "vote.txt 中无记录或加载失败")
+            return
+        
+        try:
+            user_gas = int(self.gas_entry.get()) if self.gas_entry.get().strip() else None
+        except ValueError:
+            user_gas = None
+            self.log_text.insert(tk.END, "Gas Limit 输入无效，使用估算值的120%\n")
+        
+        network = self.network_var.get()
+        try:
+            with open("config.json", "r") as f:
+                config = json.load(f)
+            net_config = config["networks"][network]
+            rpc = net_config["rpc_url"]
+        except Exception as e:
+            messagebox.showerror("错误", f"加载 config.json 失败: {e}")
+            return
+        
+        w3 = Web3(Web3.HTTPProvider(rpc))
+        if not w3.is_connected():
+            messagebox.showerror("错误", f"无法连接到 {network} 网络")
+            return
+        
+        if network == "OP":
+            rebase_contract = REBASE_CONTRACT_OP
+        else:
+            rebase_contract = REBASE_CONTRACT_BASE
+        
+        self.log_text.insert(tk.END, f"开始批量Rebases到 {network} 合约 {rebase_contract}\n")
+        
+        results = []
+        for i, (pk, tokenId) in enumerate(self.votes):
+            self.log_text.insert(tk.END, f"处理第 {i+1} 条: tokenId {tokenId}\n")
+            self.root.update()
+            
+            result = send_rebase(pk, tokenId, w3, rebase_contract, user_gas)
+            self.log_text.insert(tk.END, f"结果: {result}\n\n")
+            results.append((i+1, tokenId, result))
+            self.root.update()
+        
+        # 在日志中显示表格格式结果
+        self.display_results_table(results)
+        
+        # 输出到 CSV 文件
+        self.export_to_csv(results, filename="rebase_results.csv")
     
     def display_results_table(self, results):
         self.log_text.insert(tk.END, "\n结果表格:\n")
