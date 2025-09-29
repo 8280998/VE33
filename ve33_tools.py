@@ -106,6 +106,7 @@ def load_votes(log_text):
                 vote_id = int(vote_id_str.strip())
                 votes.append((private_key.strip(), vote_id))
         log_text.insert(tk.END, f"加载 {len(votes)} 条记录\n")
+        log_text.see(tk.END)
         return votes
     except Exception as e:
         messagebox.showerror("错误", f"加载 vote.txt 失败: {e}")
@@ -248,7 +249,7 @@ class VoteGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Ve33_Tools")
-        self.root.geometry("600x500")
+        self.root.geometry("700x500")
         self.root.configure(bg="#f0f0f0")
         
         # Data 输入
@@ -312,9 +313,11 @@ class VoteGUI:
         if address:
             self.address_label.config(text=f"解析地址: {address}")
             self.log_text.insert(tk.END, f"解析成功: {address}\n")
+            self.log_text.see(tk.END)
         else:
             self.address_label.config(text="解析地址: 失败")
             self.log_text.insert(tk.END, "解析失败: 数据格式不匹配\n")
+            self.log_text.see(tk.END)
     
     def update_gas_limit(self, *args):
         def fetch_gas_limit():
@@ -341,6 +344,7 @@ class VoteGUI:
         except ValueError:
             user_gas = None
             self.log_text.insert(tk.END, "Gas Limit 输入无效，使用估算值的120%\n")
+            self.log_text.see(tk.END)
         
         network = self.network_var.get()
         if network == "OP":
@@ -355,14 +359,17 @@ class VoteGUI:
             return
         
         self.log_text.insert(tk.END, f"开始批量投票到 {network} 合约 {contract}\n")
+        self.log_text.see(tk.END)
         
         results = []
         for i, (pk, vid) in enumerate(self.votes):
             self.log_text.insert(tk.END, f"处理第 {i+1} 条: 投票ID {vid}\n")
+            self.log_text.see(tk.END)
             self.root.update()
             
             result = send_vote(pk, vid, address, w3, contract, user_gas)
             self.log_text.insert(tk.END, f"结果: {result}\n\n")
+            self.log_text.see(tk.END)
             results.append((i+1, vid, result))
             self.root.update()
         
@@ -387,6 +394,7 @@ class VoteGUI:
         except ValueError:
             user_gas = None
             self.log_text.insert(tk.END, "Gas Limit 输入无效，使用估算值的120%\n")
+            self.log_text.see(tk.END)
         
         network = self.network_var.get()
         try:
@@ -409,14 +417,17 @@ class VoteGUI:
         reward_contracts = bribes + fees
         
         self.log_text.insert(tk.END, f"开始批量领取到 {network} 合约 {vote_contract}，代币 {token_address}\n")
+        self.log_text.see(tk.END)
         
         results = []
         for i, (pk, tokenId) in enumerate(self.votes):
             self.log_text.insert(tk.END, f"处理第 {i+1} 条: tokenId {tokenId}\n")
+            self.log_text.see(tk.END)
             self.root.update()
             
             result = send_claim(pk, tokenId, w3.to_checksum_address(token_address), w3, vote_contract, reward_contracts, user_gas)
             self.log_text.insert(tk.END, f"结果: {result}\n\n")
+            self.log_text.see(tk.END)
             results.append((i+1, tokenId, result))
             self.root.update()
         
@@ -436,6 +447,7 @@ class VoteGUI:
         except ValueError:
             user_gas = None
             self.log_text.insert(tk.END, "Gas Limit 输入无效，使用估算值的120%\n")
+            self.log_text.see(tk.END)
         
         network = self.network_var.get()
         try:
@@ -458,14 +470,17 @@ class VoteGUI:
             rebase_contract = REBASE_CONTRACT_BASE
         
         self.log_text.insert(tk.END, f"开始批量Rebases到 {network} 合约 {rebase_contract}\n")
+        self.log_text.see(tk.END)
         
         results = []
         for i, (pk, tokenId) in enumerate(self.votes):
             self.log_text.insert(tk.END, f"处理第 {i+1} 条: tokenId {tokenId}\n")
+            self.log_text.see(tk.END)
             self.root.update()
             
             result = send_rebase(pk, tokenId, w3, rebase_contract, user_gas)
             self.log_text.insert(tk.END, f"结果: {result}\n\n")
+            self.log_text.see(tk.END)
             results.append((i+1, tokenId, result))
             self.root.update()
         
@@ -477,11 +492,16 @@ class VoteGUI:
     
     def display_results_table(self, results):
         self.log_text.insert(tk.END, "\n结果表格:\n")
+        self.log_text.see(tk.END)
         self.log_text.insert(tk.END, f"{'序号':<5} {'ID':<10} {'结果'}\n")
+        self.log_text.see(tk.END)
         self.log_text.insert(tk.END, "-" * 80 + "\n")
+        self.log_text.see(tk.END)
         for seq, vid, res in results:
             self.log_text.insert(tk.END, f"{seq:<5} {vid:<10} {res}\n")
+            self.log_text.see(tk.END)
         self.log_text.insert(tk.END, "\n")
+        self.log_text.see(tk.END)
     
     def export_to_csv(self, results, filename="vote_results.csv"):
         try:
@@ -491,8 +511,10 @@ class VoteGUI:
                 for row in results:
                     writer.writerow(row)
             self.log_text.insert(tk.END, f"结果已导出到 {filename}\n")
+            self.log_text.see(tk.END)
         except Exception as e:
             self.log_text.insert(tk.END, f"导出 CSV 失败: {e}\n")
+            self.log_text.see(tk.END)
 
 if __name__ == "__main__":
     root = tk.Tk()
