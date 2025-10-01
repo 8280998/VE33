@@ -2,7 +2,7 @@
   "networks": {
     "Base": {
       "vote_contract": "0x16613524e02ad97eDfeF371bC883F2F5d6C480A5",
-      "rpc_url": "https://base-mainnet.g.alchemy.com/v2/MXQxIGxTWNSq8O-TifTz5au0OpvgIHyU",
+      "rpc_url": "https://mainnet.base.org",
       "bribe_voting_rewards": {
         "BribeVotingReward1": "0xaf1fdaa8bb14be7277e2c10f6c79a4c31e91261c",
         "BribeVotingReward2": "0xb7699e22ece5178c7abd3f1d2e2661bf75cfb316",
