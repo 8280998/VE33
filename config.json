@@ -58,7 +58,14 @@
         "BribeVotingReward3": "0x07ffde14ceaade84164fd8fea876aebdcb079362",
         "BribeVotingReward4": "0x6265ec90e28b8ffd9aa8bd66786bceb9dc62d9bb",
         "BribeVotingReward5": "0xa96cdae0dfd4915b27c57f8abb5b615c1ed2be17",
-        "BribeVotingReward6": "0x0aff6991dfd071bd7d2f8e676513ee82041aeece"
+        "BribeVotingReward6": "0x0aff6991dfd071bd7d2f8e676513ee82041aeece",
+        "BribeVotingReward7": "0xdca005fc46324d437d8ab1960dd34f74c8e04b1d",
+        "BribeVotingReward8": "0xca0321a079add1e8c5d609119e5f733ebb3fcc1a",
+        "BribeVotingReward9": "0xdc5579580eecce716e78536701c3421b5c311856",
+        "BribeVotingReward10": "0x2b322ace61352f2e39a5c0377c7d23239d23522c",
+        "BribeVotingReward11": "0x7b3b591b463713a69b6dd25083a1ae2380bfb2f5",
+        "BribeVotingReward12": "0x997e1919d50273ee6e2eb28fc424b7dbe2db95ac",
+        "BribeVotingReward13": "0xe8ac34fc43199f6e3ad1074832c4f1cf3580bff8"
       },
       "fees_voting_rewards": {
         "FeesVotingReward1": "0x9291e1e76561749af097f86b02c39f603f60d910",
@@ -66,7 +73,31 @@
         "FeesVotingReward3": "0x35a55a24ef7da2dc6aeb65d762cec96608fc4df6",
         "FeesVotingReward4": "0xb983bf6d65ef216683ce9faf07639f905438685d",
         "FeesVotingReward5": "0x68051f9847ead8cf9c9d6bf918946f56d7827e7d",
-        "FeesVotingReward6": "0xe615e38763ee2d66f032185d7e1e83f5941b55af"
+        "FeesVotingReward6": "0xe615e38763ee2d66f032185d7e1e83f5941b55af",
+        "FeesVotingReward7": "0x083e1e81c30022e40e78733db1be8c8435b88197",
+        "FeesVotingReward8": "0x52024b77c35d0ef2366ae56f0652dde56201bf53",
+        "FeesVotingReward9": "0x3431d4ca6933bccca4e87165ba0b52326b162434",
+        "FeesVotingReward10": "0x6e8ddc75050a0691d9d2b868d3921a6f5e7afd7f",
+        "FeesVotingReward11": "0xc3955e4c89bb39df06e13af89d1cb869279e4655",
+        "FeesVotingReward12": "0x3c87d2a2ac8cf9bb2b448e5ba6c3aaf877acfb3f",
+        "FeesVotingReward13": "0xea8c82d29ae8e7c5c90b44494ca51b02fc4cea9c",
+        "FeesVotingReward14": "0x6a73f3aefa631de55691d9c145bfc72e46757228",
+        "FeesVotingReward15": "0x493186b56a24ef080cbd07fee93d2b0cc0c2b7ce",
+        "FeesVotingReward16": "0xd99c51c481ad25cb77501aae878f8b5c957b8c1a",
+        "FeesVotingReward17": "0xd60233c420648d238c46c20daaa772c8d8a70b77",
+        "FeesVotingReward18": "0xc292e4f6b9a00d8879cf106e832d8dc401b95046",
+        "FeesVotingReward19": "0x87b2163f6ae2c404edab51ce75e0c3a57162d20d",
+        "FeesVotingReward20": "0xee1edff310abc961a34b86029c0912fb2728b9d4",
+        "FeesVotingReward21": "0xb623c217adcd0eac3a8321a7afae5b49e3b617bb",
+        "FeesVotingReward22": "0x4bf5bfdc6d18641f085c4ef530ee0ddd9ac45c26",
+        "FeesVotingReward23": "0x0edc1c2d5abcbf4d8a67609d3d4b96d438da9f59",
+        "FeesVotingReward24": "0xe5a5eb2b3e63929900e62ccd53906d93bbc22c52",
+        "FeesVotingReward25": "0xed33eab6796e058411fc11563a00608d810d258f",
+        "FeesVotingReward26": "0x57edef94ec07f078fc7072a15f9de829e3ee520d",
+        "FeesVotingReward27": "0x71d8c2d3d824ADFEA809C666E5d3B2F142629474",
+        "FeesVotingReward28": "0x3ecaad2d3996df95d415d4c1c0f7587b22dbd901",
+        "FeesVotingReward29": "0x04bafba6fc2419f7d0930296829c57eabee30ad1",
+        "FeesVotingReward30": "0x9abfd4c49b1f7fcb21d1d191837bc242ac2d3b1f"
       }
     }
   }
