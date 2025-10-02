@@ -28,18 +28,21 @@
       "vote_contract": "0x41c914ee0c7e1a5edcd0295623e6dc557b5abf3c",
       "rpc_url": "https://mainnet.optimism.io",
       "bribe_voting_rewards": {
+      "bribe_voting_rewards": {
         "BribeVotingReward1": "0xd57e9480234f2ac9321a48d875688827d2271451",
         "BribeVotingReward2": "0xbc636c8fbbc6b8aaa79a86b437c7bb575cffedf4",
         "BribeVotingReward3": "0x07ffde14ceaade84164fd8fea876aebdcb079362",
         "BribeVotingReward4": "0x6265ec90e28b8ffd9aa8bd66786bceb9dc62d9bb",
-        "BribeVotingReward5": "0xa96cdae0dfd4915b27c57f8abb5b615c1ed2be17"
+        "BribeVotingReward5": "0xa96cdae0dfd4915b27c57f8abb5b615c1ed2be17",
+        "BribeVotingReward6": "0x0aff6991dfd071bd7d2f8e676513ee82041aeece"
       },
       "fees_voting_rewards": {
         "FeesVotingReward1": "0x9291e1e76561749af097f86b02c39f603f60d910",
         "FeesVotingReward2": "0x0206a52dec1ae97a06871a1353d5f47a3491b204",
         "FeesVotingReward3": "0x35a55a24ef7da2dc6aeb65d762cec96608fc4df6",
         "FeesVotingReward4": "0xb983bf6d65ef216683ce9faf07639f905438685d",
-        "FeesVotingReward5": "0x68051f9847ead8cf9c9d6bf918946f56d7827e7d"
+        "FeesVotingReward5": "0x68051f9847ead8cf9c9d6bf918946f56d7827e7d",
+        "FeesVotingReward6": "0xe615e38763ee2d66f032185d7e1e83f5941b55af"
       }
     }
   }
