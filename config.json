@@ -11,7 +11,12 @@
         "BribeVotingReward5": "0xb30f5119022ed23267f5680b6b0cbf8c84598106",
         "BribeVotingReward6": "0xf6a131d91ea1be48f5e702c5f74806e0299a4941",
         "BribeVotingReward7": "0x1007b52921268b7ff21a6889210305b552aabe3c",
-        "BribeVotingReward8": "0xf317c3789130226b9f5b0bba6be193bd4aca57bc"
+        "BribeVotingReward8": "0xf317c3789130226b9f5b0bba6be193bd4aca57bc",
+        "BribeVotingReward9": "0x137357280635e3381914fcd9c8d63c8098cc2a2d",
+        "BribeVotingReward10": "0xc5a2584d87a12d3d9eb8927f48020f41cfb9aeab",
+        "BribeVotingReward11": "0xae507c81432219593591534667729bef116cfd5d",
+        "BribeVotingReward12": "0xc5a2584d87a12d3d9eb8927f48020f41cfb9aeab",
+        "BribeVotingReward13": "0xc5a2584d87a12d3d9eb8927f48020f41cfb9aeab"
       },
       "fees_voting_rewards": {
         "FeesVotingReward1": "0x7798c136e0c000b8bffdc2fe4e208039320f0b62",
@@ -21,13 +26,17 @@
         "FeesVotingReward5": "0xfcb9b6983ae4ef935bf482b26de54e6ca16aea1f",
         "FeesVotingReward6": "0xf7bcdbcfc66793b019be121800282da62f7925d7",
         "FeesVotingReward7": "0xe5bfd74792d553d63bb0c89053561988cb9b4804",
-        "FeesVotingReward8": "0x436369d91feafb5bc033dcb6e79a2fceeb037f0a"
+        "FeesVotingReward8": "0xd351e453b28dac29c917939ed04416c42ad063ae",
+        "FeesVotingReward9": "0x436369d91feafb5bc033dcb6e79a2fceeb037f0a",
+        "FeesVotingReward10": "0xa2eded6ee17af8debf70a1e93ac66e60dbfaaf33",
+        "FeesVotingReward11": "0x2e01828800e00b3a2ba214a7f2c8e25c65fb4894",
+        "FeesVotingReward12": "0x62c17d60c3ea7e5f2a4232da9e9095a412c6e2b8",
+        "FeesVotingReward13": "0x1e18274e108ebb98131eb3ad5f849259dcf1974a"
       }
     },
     "OP": {
       "vote_contract": "0x41c914ee0c7e1a5edcd0295623e6dc557b5abf3c",
       "rpc_url": "https://mainnet.optimism.io",
-      "bribe_voting_rewards": {
       "bribe_voting_rewards": {
         "BribeVotingReward1": "0xd57e9480234f2ac9321a48d875688827d2271451",
         "BribeVotingReward2": "0xbc636c8fbbc6b8aaa79a86b437c7bb575cffedf4",
