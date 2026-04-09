@@ -38,3 +38,6 @@ BASE链的AERO领取投票奖励，是通过投票合约0x16613524e02ad97eDfeF37
 
 <img width="1800" height="1456" alt="QQ_1775712216499" src="https://github.com/user-attachments/assets/29c5d2b6-bf6c-435d-82b3-4734f9c6fb20" />
 
+## 6 批量代币领取结果
+
+<img width="2040" height="994" alt="QQ_1775712533677" src="https://github.com/user-attachments/assets/0c55c07b-763b-4965-8f7d-ee895f08a910" />
