@@ -1,522 +1,284 @@
-import tkinter as tk
-from tkinter import messagebox, scrolledtext, ttk
-from web3 import Web3
+import sys
 import json
-import re
 import threading
-import csv
+import time
+import re
+import random
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
+                             QHBoxLayout, QTextEdit, QPushButton, QRadioButton, 
+                             QLabel, QLineEdit, QGroupBox, QButtonGroup)
+from PyQt6.QtCore import pyqtSignal, QObject, Qt
+from web3 import Web3
 
-# ABI for earned function
-ABI_EARNED = [
-    {
-        "inputs": [
-            {"internalType": "address", "name": "token", "type": "address"},
-            {"internalType": "uint256", "name": "tokenId", "type": "uint256"}
-        ],
-        "name": "earned",
-        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-        "stateMutability": "view",
-        "type": "function"
-    }
-]
+# --- 核心 ABI 配置 ---
+ABI_EARNED = [{"inputs": [{"name": "token", "type": "address"}, {"name": "tokenId", "type": "uint256"}],
+               "name": "earned", "outputs": [{"name": "", "type": "uint256"}], "stateMutability": "view", "type": "function"}]
 
-# ABI for claimBribes function
-ABI_CLAIM = [
-    {
-        "inputs": [
-            {"internalType": "address[]", "name": "_bribes", "type": "address[]"},
-            {"internalType": "address[][]", "name": "_tokens", "type": "address[][]"},
-            {"internalType": "uint256", "name": "_tokenId", "type": "uint256"}
-        ],
-        "name": "claimBribes",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    }
-]
+ABI_CLAIM = [{"inputs": [{"name": "_bribes", "type": "address[]"}, {"name": "_tokens", "type": "address[][]"}, {"name": "_tokenId", "type": "uint256"}],
+              "name": "claimBribes", "outputs": [], "stateMutability": "nonpayable", "type": "function"}]
 
-# 合约地址
-OP_CONTRACT = "0x41c914ee0c7e1a5edcd0295623e6dc557b5abf3c"
-BASE_CONTRACT = "0x16613524e02ad97eDfeF371bC883F2F5d6C480A5"
-REBASE_CONTRACT_OP = "0x9d4736ec60715e71afe72973f7885dcbc21ea99b"
-REBASE_CONTRACT_BASE = "0x227f65131a261548b057215bb1d5ab2997964c7d"
+class Ve33Tools(QMainWindow):
+    # 1. 定义一个专门用来传递日志文本的跨线程信号
+    log_signal = pyqtSignal(str)
 
-# RPC 端点
-OP_RPC = "https://mainnet.optimism.io"
-BASE_RPC = "https://mainnet.base.org"
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Ve33 Tools Professional - Auto Scan Edition")
+        self.resize(900, 700)
+        self.is_running = threading.Event() # 停止标志位
+        
+        # 将信号连接到自定义的日志打印函数上
+        self.log_signal.connect(self.append_log)
+        
+        self.init_ui()
+        self.load_data()
 
-# 函数选择器
-FUNCTION_SELECTOR = "0x7ac09bf7"
+    def init_ui(self):
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        main_layout = QVBoxLayout(central_widget)
 
-# 固定金额 (100 * 10^18)
-AMOUNT = 100000000000000000000
-AMOUNT_HEX = hex(AMOUNT)
+        # --- 顶部设置区 ---
+        top_layout = QHBoxLayout()
+        
+        net_group = QGroupBox("网络")
+        net_layout = QHBoxLayout()
+        self.rb_base = QRadioButton("Base")
+        self.rb_base.setChecked(True)
+        self.rb_op = QRadioButton("OP")
+        net_layout.addWidget(self.rb_base)
+        net_layout.addWidget(self.rb_op)
+        net_group.setLayout(net_layout)
+        
+        gas_group = QGroupBox("Gas Limit")
+        gas_layout = QHBoxLayout()
+        self.gas_input = QLineEdit()
+        self.gas_input.setPlaceholderText("默认自动")
+        gas_layout.addWidget(self.gas_input)
+        gas_group.setLayout(gas_layout)
 
-# 解析 calldata 的函数
-def parse_vote_data(data):
-    if not data.lower().startswith('0x7ac09bf7'):
-        return None
-    data = data[2:] if data.startswith('0x') else data
-    data = data[8:]  # 移除选择器 '7ac09bf7'
-    # 现在 data 是参数的 hex 字符串
-    offset_addr = data[64:128]
-    if offset_addr != '0' * 60 + '0060':
-        return None
-    offset_amount = data[128:192]
-    if offset_amount != '0' * 60 + '00a0':
-        return None
-    # 地址数组从 192 hex 字符开始
-    addr_start = 192
-    length_hex = data[addr_start:addr_start+64]
-    length = int(length_hex, 16)
-    if length != 1:
-        return None
-    # 地址从 addr_start + 64 开始
-    addr_hex = data[addr_start + 64 : addr_start + 128]
-    address = '0x' + addr_hex[24:]
-    return address
+        top_layout.addWidget(net_group)
+        top_layout.addWidget(gas_group)
+        main_layout.addLayout(top_layout)
 
-# 构建 calldata
-def build_calldata(vote_id, address, amount_hex):
-    vote_id_hex = hex(vote_id)[2:].zfill(64)
-    address_padded = "000000000000000000000000" + address[2:]
-    amount_padded = amount_hex[2:].zfill(64)
-    calldata = (
-        FUNCTION_SELECTOR +
-        vote_id_hex +
-        "0000000000000000000000000000000000000000000000000000000000000060" +  # offset addresses
-        "00000000000000000000000000000000000000000000000000000000000000a0" +  # offset amounts
-        "0000000000000000000000000000000000000000000000000000000000000001" +  # addresses length 1
-        address_padded +
-        "0000000000000000000000000000000000000000000000000000000000000001" +  # amounts length 1
-        amount_padded
-    )
-    return calldata
+        # --- 投票 Data 解析区 ---
+        vote_group = QGroupBox("投票 Data 解析")
+        vote_layout = QVBoxLayout()
+        self.data_input = QTextEdit()
+        self.data_input.setPlaceholderText("在此粘贴投票交易的 HEX Data...")
+        self.data_input.setFixedHeight(80)
+        self.data_input.textChanged.connect(self.auto_parse_vote_address)
+        self.target_addr_label = QLabel("解析地址: 未解析")
+        self.target_addr_label.setStyleSheet("color: #3498db; font-weight: bold;")
+        vote_layout.addWidget(self.data_input)
+        vote_layout.addWidget(self.target_addr_label)
+        vote_group.setLayout(vote_layout)
+        main_layout.addWidget(vote_group)
 
-# 加载 vote.txt
-def load_votes(log_text):
-    try:
-        with open("vote.txt", "r") as f:
-            lines = f.readlines()
-        votes = []
-        for line in lines:
-            line = line.strip()
-            if "|" in line:
-                private_key, vote_id_str = line.split("|", 1)
-                vote_id = int(vote_id_str.strip())
-                votes.append((private_key.strip(), vote_id))
-        log_text.insert(tk.END, f"加载 {len(votes)} 条记录\n")
-        log_text.see(tk.END)
-        return votes
-    except Exception as e:
-        messagebox.showerror("错误", f"加载 vote.txt 失败: {e}")
-        return []
+        # --- 操作按钮区 ---
+        btn_layout = QHBoxLayout()
+        self.btn_vote = QPushButton("批量投票")
+        self.btn_claim = QPushButton("自动扫描领取奖励")
+        self.btn_rebase = QPushButton("批量 Rebase")
+        self.btn_stop = QPushButton("停止运行")
+        
+        self.btn_vote.setStyleSheet("background-color: #3498db; color: white; height: 35px;")
+        self.btn_claim.setStyleSheet("background-color: #2ecc71; color: white; height: 35px;")
+        self.btn_rebase.setStyleSheet("height: 35px;")
+        self.btn_stop.setStyleSheet("background-color: #e74c3c; color: white; height: 35px;")
+        
+        self.btn_vote.clicked.connect(lambda: self.start_task("vote"))
+        self.btn_claim.clicked.connect(lambda: self.start_task("claim"))
+        self.btn_rebase.clicked.connect(lambda: self.start_task("rebase"))
+        self.btn_stop.clicked.connect(self.stop_task)
+        
+        btn_layout.addWidget(self.btn_vote)
+        btn_layout.addWidget(self.btn_claim)
+        btn_layout.addWidget(self.btn_rebase)
+        btn_layout.addWidget(self.btn_stop)
+        main_layout.addLayout(btn_layout)
 
-# 发送交易并检查结果
-def send_vote(private_key, vote_id, address, w3, contract_address, user_gas):
-    try:
-        account = w3.eth.account.from_key(private_key)
-        nonce = w3.eth.get_transaction_count(account.address)
-        
-        tx = {
-            'to': w3.to_checksum_address(contract_address),
-            'value': 0,
-            'gasPrice': w3.eth.gas_price,
-            'nonce': nonce,
-            'data': build_calldata(vote_id, address, AMOUNT_HEX),
-            'chainId': w3.eth.chain_id
-        }
-        estimated_gas = w3.eth.estimate_gas(tx)
-        if user_gas:
-            tx['gas'] = user_gas
-        else:
-            tx['gas'] = int(estimated_gas * 1.2)
-        
-        signed_tx = w3.eth.account.sign_transaction(tx, private_key)
-        tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
-        receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
-        
-        if receipt['status'] == 1:
-            return f"成功: {tx_hash.hex()}"
-        else:
-            return f"失败: {tx_hash.hex()} - 原因: 交易回滚"
-    except Exception as e:
-        return f"错误: {str(e)}"
+        # --- 日志区 ---
+        self.log_output = QTextEdit()
+        self.log_output.setReadOnly(True)
+        self.log_output.setStyleSheet("background-color: #2c3e50; color: #ecf0f1; font-family: 'Consolas'; font-size: 13px;")
+        main_layout.addWidget(self.log_output)
 
-def send_claim(private_key, tokenId, token_address, w3, vote_contract, reward_contracts, user_gas):
-    try:
-        account = w3.eth.account.from_key(private_key)
-        nonce = w3.eth.get_transaction_count(account.address)
-        
-        _bribes = []
-        _tokens = []
-        for rc in reward_contracts:
-            reward_c = w3.eth.contract(address=rc, abi=ABI_EARNED)
-            amount = reward_c.functions.earned(token_address, tokenId).call({'from': account.address})
-            if amount > 0:
-                _bribes.append(rc)
-                _tokens.append([token_address])
-        
-        if not _bribes:
-            return "无领取金额"
-        
-        voter_c = w3.eth.contract(address=vote_contract, abi=ABI_CLAIM)
-        
-        tx = voter_c.functions.claimBribes(_bribes, _tokens, tokenId).build_transaction({
-            'from': account.address,
-            'value': 0,
-            'gasPrice': w3.eth.gas_price,
-            'nonce': nonce,
-            'chainId': w3.eth.chain_id
-        })
-        
-        estimated_gas = w3.eth.estimate_gas(tx)
-        tx['gas'] = user_gas if user_gas else int(estimated_gas * 1.2)
-        
-        signed_tx = w3.eth.account.sign_transaction(tx, private_key)
-        tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
-        receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
-        
-        if receipt['status'] == 1:
-            return f"成功: {tx_hash.hex()}"
-        else:
-            return f"失败: {tx_hash.hex()} - 原因: 交易回滚"
-    except Exception as e:
-        return f"错误: {str(e)}"
+    # 2. 安全的日志打印方法（带自动滚动）
+    def append_log(self, text):
+        self.log_output.append(text)
+        # 强制将滚动条拉到最底部
+        scrollbar = self.log_output.verticalScrollBar()
+        scrollbar.setValue(scrollbar.maximum())
 
-def send_rebase(private_key, tokenId, w3, contract_address, user_gas):
-    try:
-        account = w3.eth.account.from_key(private_key)
-        nonce = w3.eth.get_transaction_count(account.address)
-        
-        data = "0x379607f5" + hex(tokenId)[2:].zfill(64)
-        
-        tx = {
-            'to': w3.to_checksum_address(contract_address),
-            'value': 0,
-            'gasPrice': w3.eth.gas_price,
-            'nonce': nonce,
-            'data': data,
-            'chainId': w3.eth.chain_id
-        }
-        estimated_gas = w3.eth.estimate_gas(tx)
-        if user_gas:
-            tx['gas'] = user_gas
-        else:
-            tx['gas'] = int(estimated_gas * 1.2)
-        
-        signed_tx = w3.eth.account.sign_transaction(tx, private_key)
-        tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
-        receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
-        
-        if receipt['status'] == 1:
-            return f"成功: {tx_hash.hex()}"
-        else:
-            return f"失败: {tx_hash.hex()} - 原因: 交易回滚"
-    except Exception as e:
-        return f"错误: {str(e)}"
-
-# 获取当前估算 gas limit 的函数（使用有效 dummy calldata）
-def get_estimated_gas_limit(network):
-    if network == "OP":
-        w3 = Web3(Web3.HTTPProvider(OP_RPC))
-        contract = OP_CONTRACT
-    else:
-        w3 = Web3(Web3.HTTPProvider(BASE_RPC))
-        contract = BASE_CONTRACT
-    if w3.is_connected():
-        # 使用有效的 dummy calldata（从用户例子）
-        dummy_data = '0x7ac09bf70000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000010000000000000000000000004dc22588ade05c40338a9d95a6da9dcee68bcd6000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000'
-        dummy_tx = {
-            'to': w3.to_checksum_address(contract),
-            'value': 0,
-            'data': dummy_data,
-        }
+    def load_data(self):
         try:
-            estimated_gas = w3.eth.estimate_gas(dummy_tx)
-            return f"{estimated_gas} (留空默认值)"
+            with open("config.json", "r", encoding="utf-8") as f:
+                raw_text = f.read()
+            
+            # 使用高级正则，忽略 https:// 里的双斜杠，只删掉真正的 // 注释
+            clean_text = re.sub(r'(?<!:)//.*', '', raw_text)
+            self.config = json.loads(clean_text)
+        
+            with open("vote.txt", "r", encoding="utf-8") as f:
+                self.votes = [line.strip().split("|") for line in f if "|" in line]
+            
+            # 全局统一使用信号发送日志
+            self.log_signal.emit(f"[*] 就绪。已加载 {len(self.votes)} 个账户。")
+        
+        except Exception as e:
+            self.log_signal.emit(f"[!] 加载失败: {e}")
+
+    def auto_parse_vote_address(self):
+        data = self.data_input.toPlainText().strip()
+        if not data.startswith("0x7ac09bf7"):
+            self.target_addr_label.setText("解析地址: 格式错误")
+            return
+        try:
+            addr_hex = data[264:328]
+            addr = "0x" + addr_hex[-40:]
+            self.target_addr_label.setText(f"解析地址: {Web3.to_checksum_address(addr)}")
         except:
-            # 如果仍失败，返回典型值
-            if network == "OP":
-                return "200000 (典型值)"
-            else:
-                return "250000 (典型值)"
-    else:
-        return "无法连接"
+            self.target_addr_label.setText("解析地址: 解析失败")
 
-# GUI 主类
-class VoteGUI:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Ve33_Tools")
-        self.root.geometry("700x500")
-        self.root.configure(bg="#f0f0f0")
-        
-        # Data 输入
-        tk.Label(root, text="粘贴 Data:", bg="#f0f0f0", font=("Arial", 12)).pack(pady=5)
-        self.data_entry = tk.Text(root, height=5, width=70)
-        self.data_entry.pack(pady=5)
-        self.data_entry.bind("<KeyRelease>", self.auto_parse_data)  # 绑定键盘释放事件自动解析
-        
-        # 地址标签
-        parse_frame = tk.Frame(root, bg="#f0f0f0")
-        self.address_label = tk.Label(parse_frame, text="投票对象地址: 未解析", bg="#f0f0f0", font=("Arial", 10))
-        self.address_label.pack(side=tk.LEFT)
-        parse_frame.pack(pady=5)
-        
-        # 网络选择一行，包括 Gas Limit 和当前估算 Gas Limit
-        network_frame = tk.Frame(root, bg="#f0f0f0")
-        tk.Label(network_frame, text="选择网络:", bg="#f0f0f0", font=("Arial", 12)).pack(side=tk.LEFT, padx=10)
-        self.network_var = tk.StringVar(value="OP")
-        self.network_var.trace("w", self.update_gas_limit)  # 当网络变化时更新 gas limit
-        tk.Radiobutton(network_frame, text="OP", variable=self.network_var, value="OP", bg="#f0f0f0").pack(side=tk.LEFT, padx=5)
-        tk.Radiobutton(network_frame, text="Base", variable=self.network_var, value="Base", bg="#f0f0f0").pack(side=tk.LEFT, padx=5)
-        tk.Label(network_frame, text="Gas Limit:", bg="#f0f0f0", font=("Arial", 12)).pack(side=tk.LEFT, padx=10)
-        self.gas_entry = tk.Entry(network_frame, width=10)
-        self.gas_entry.pack(side=tk.LEFT, padx=5)
-        # 默认留空，使用120%估算
-        self.gas_limit_label = tk.Label(network_frame, text="当前 Gas Limit: 计算中...", bg="#f0f0f0", font=("Arial", 10))
-        self.gas_limit_label.pack(side=tk.LEFT, padx=10)
-        network_frame.pack(pady=5)
-        
-        # 领取代币合约输入
-        token_frame = tk.Frame(root, bg="#f0f0f0")
-        tk.Label(token_frame, text="领取代币合约:", bg="#f0f0f0", font=("Arial", 12)).pack(side=tk.LEFT, padx=10)
-        self.token_entry = tk.Entry(token_frame, width=50)
-        self.token_entry.pack(side=tk.LEFT, padx=5)
-        token_frame.pack(pady=5)
-        
-        # 批量按钮
-        button_frame = tk.Frame(root, bg="#f0f0f0")
-        tk.Button(button_frame, text="投票", command=self.batch_vote, font=("Arial", 12)).pack(side=tk.LEFT, padx=10)
-        tk.Button(button_frame, text="领取", command=self.batch_claim, font=("Arial", 12)).pack(side=tk.LEFT, padx=10)
-        tk.Button(button_frame, text="Rebases", command=self.batch_rebases, font=("Arial", 12)).pack(side=tk.LEFT, padx=10)
-        button_frame.pack(pady=10)
-        
-        # 日志
-        tk.Label(root, text="日志:", bg="#f0f0f0", font=("Arial", 12)).pack(pady=5)
-        self.log_text = scrolledtext.ScrolledText(root, height=10, width=70)
-        self.log_text.pack(pady=5, fill=tk.BOTH, expand=True)
-        
-        # 默认加载 vote.txt
-        self.votes = load_votes(self.log_text)
-        
-        # 初始化 gas limit
-        self.update_gas_limit()
-    
-    def auto_parse_data(self, event=None):
-        self.parse_data()
-    
-    def parse_data(self):
-        data = self.data_entry.get("1.0", tk.END).strip()
-        address = parse_vote_data(data)
-        if address:
-            self.address_label.config(text=f"解析地址: {address}")
-            self.log_text.insert(tk.END, f"解析成功: {address}\n")
-            self.log_text.see(tk.END)
-        else:
-            self.address_label.config(text="解析地址: 失败")
-            self.log_text.insert(tk.END, "解析失败: 数据格式不匹配\n")
-            self.log_text.see(tk.END)
-    
-    def update_gas_limit(self, *args):
-        def fetch_gas_limit():
-            network = self.network_var.get()
-            gas_limit_str = get_estimated_gas_limit(network)
-            self.gas_limit_label.config(text=f"当前 Gas Limit: {gas_limit_str}")
-        
-        threading.Thread(target=fetch_gas_limit).start()  # 使用线程避免阻塞 UI
-    
-    def batch_vote(self):
-        if not self.votes:
-            messagebox.showwarning("警告", "vote.txt 中无记录或加载失败")
-            return
-        
-        address_text = self.address_label.cget("text")
-        if "未解析" in address_text or "失败" in address_text:
-            messagebox.showwarning("警告", "请先解析 Data 获取地址")
-            return
-        
-        address = address_text.split(": ")[1]
-        
+    def stop_task(self):
+        self.is_running.clear()
+        self.log_signal.emit("\n[!] 正在请求停止，请等待当前操作中断...")
+
+    def start_task(self, task_type):
+        self.is_running.set()
+        self.toggle_btns(False)
+        threading.Thread(target=self.run_worker, args=(task_type,), daemon=True).start()
+
+    def toggle_btns(self, state):
+        self.btn_vote.setEnabled(state)
+        self.btn_claim.setEnabled(state)
+        self.btn_rebase.setEnabled(state)
+
+    def run_worker(self, task_type):
+        net = "Base" if self.rb_base.isChecked() else "OP"
         try:
-            user_gas = int(self.gas_entry.get()) if self.gas_entry.get().strip() else None
-        except ValueError:
-            user_gas = None
-            self.log_text.insert(tk.END, "Gas Limit 输入无效，使用估算值的120%\n")
-            self.log_text.see(tk.END)
-        
-        network = self.network_var.get()
-        if network == "OP":
-            w3 = Web3(Web3.HTTPProvider(OP_RPC))
-            contract = OP_CONTRACT
-        else:
-            w3 = Web3(Web3.HTTPProvider(BASE_RPC))
-            contract = BASE_CONTRACT
-        
-        if not w3.is_connected():
-            messagebox.showerror("错误", f"无法连接到 {network} 网络")
-            return
-        
-        self.log_text.insert(tk.END, f"开始批量投票到 {network} 合约 {contract}\n")
-        self.log_text.see(tk.END)
-        
-        results = []
-        for i, (pk, vid) in enumerate(self.votes):
-            self.log_text.insert(tk.END, f"处理第 {i+1} 条: 投票ID {vid}\n")
-            self.log_text.see(tk.END)
-            self.root.update()
+            cfg = self.config["networks"][net]
+            w3 = Web3(Web3.HTTPProvider(cfg["rpc_url"]))
             
-            result = send_vote(pk, vid, address, w3, contract, user_gas)
-            self.log_text.insert(tk.END, f"结果: {result}\n\n")
-            self.log_text.see(tk.END)
-            results.append((i+1, vid, result))
-            self.root.update()
-        
-        # 在日志中显示表格格式结果
-        self.display_results_table(results)
-        
-        # 输出到 CSV 文件
-        self.export_to_csv(results)
-    
-    def batch_claim(self):
-        if not self.votes:
-            messagebox.showwarning("警告", "vote.txt 中无记录或加载失败")
-            return
-        
-        token_address = self.token_entry.get().strip()
-        if not token_address:
-            messagebox.showwarning("警告", "请填写领取代币合约地址")
-            return
-        
-        try:
-            user_gas = int(self.gas_entry.get()) if self.gas_entry.get().strip() else None
-        except ValueError:
-            user_gas = None
-            self.log_text.insert(tk.END, "Gas Limit 输入无效，使用估算值的120%\n")
-            self.log_text.see(tk.END)
-        
-        network = self.network_var.get()
-        try:
-            with open("config.json", "r") as f:
-                config = json.load(f)
-            net_config = config["networks"][network]
-            rpc = net_config["rpc_url"]
-        except Exception as e:
-            messagebox.showerror("错误", f"加载 config.json 失败: {e}")
-            return
-        
-        w3 = Web3(Web3.HTTPProvider(rpc))
-        if not w3.is_connected():
-            messagebox.showerror("错误", f"无法连接到 {network} 网络")
-            return
-        
-        vote_contract = w3.to_checksum_address(net_config["vote_contract"])
-        bribes = [w3.to_checksum_address(addr) for addr in net_config["bribe_voting_rewards"].values()]
-        fees = [w3.to_checksum_address(addr) for addr in net_config["fees_voting_rewards"].values()]
-        reward_contracts = bribes + fees
-        
-        self.log_text.insert(tk.END, f"开始批量领取到 {network} 合约 {vote_contract}，代币 {token_address}\n")
-        self.log_text.see(tk.END)
-        
-        results = []
-        for i, (pk, tokenId) in enumerate(self.votes):
-            self.log_text.insert(tk.END, f"处理第 {i+1} 条: tokenId {tokenId}\n")
-            self.log_text.see(tk.END)
-            self.root.update()
+            # 3. 核心修改：复制并随机打乱执行顺序
+            votes_to_process = self.votes.copy()
+            random.shuffle(votes_to_process)
             
-            result = send_claim(pk, tokenId, w3.to_checksum_address(token_address), w3, vote_contract, reward_contracts, user_gas)
-            self.log_text.insert(tk.END, f"结果: {result}\n\n")
-            self.log_text.see(tk.END)
-            results.append((i+1, tokenId, result))
-            self.root.update()
-        
-        # 在日志中显示表格格式结果
-        self.display_results_table(results)
-        
-        # 输出到 CSV 文件
-        self.export_to_csv(results, filename="claim_results.csv")
-    
-    def batch_rebases(self):
-        if not self.votes:
-            messagebox.showwarning("警告", "vote.txt 中无记录或加载失败")
-            return
-        
-        try:
-            user_gas = int(self.gas_entry.get()) if self.gas_entry.get().strip() else None
-        except ValueError:
-            user_gas = None
-            self.log_text.insert(tk.END, "Gas Limit 输入无效，使用估算值的120%\n")
-            self.log_text.see(tk.END)
-        
-        network = self.network_var.get()
-        try:
-            with open("config.json", "r") as f:
-                config = json.load(f)
-            net_config = config["networks"][network]
-            rpc = net_config["rpc_url"]
-        except Exception as e:
-            messagebox.showerror("错误", f"加载 config.json 失败: {e}")
-            return
-        
-        w3 = Web3(Web3.HTTPProvider(rpc))
-        if not w3.is_connected():
-            messagebox.showerror("错误", f"无法连接到 {network} 网络")
-            return
-        
-        if network == "OP":
-            rebase_contract = REBASE_CONTRACT_OP
-        else:
-            rebase_contract = REBASE_CONTRACT_BASE
-        
-        self.log_text.insert(tk.END, f"开始批量Rebases到 {network} 合约 {rebase_contract}\n")
-        self.log_text.see(tk.END)
-        
-        results = []
-        for i, (pk, tokenId) in enumerate(self.votes):
-            self.log_text.insert(tk.END, f"处理第 {i+1} 条: tokenId {tokenId}\n")
-            self.log_text.see(tk.END)
-            self.root.update()
+            self.log_signal.emit(f"[*] 已打乱钱包顺序，准备执行任务...")
             
-            result = send_rebase(pk, tokenId, w3, rebase_contract, user_gas)
-            self.log_text.insert(tk.END, f"结果: {result}\n\n")
-            self.log_text.see(tk.END)
-            results.append((i+1, tokenId, result))
-            self.root.update()
-        
-        # 在日志中显示表格格式结果
-        self.display_results_table(results)
-        
-        # 输出到 CSV 文件
-        self.export_to_csv(results, filename="rebase_results.csv")
-    
-    def display_results_table(self, results):
-        self.log_text.insert(tk.END, "\n结果表格:\n")
-        self.log_text.see(tk.END)
-        self.log_text.insert(tk.END, f"{'序号':<5} {'ID':<10} {'结果'}\n")
-        self.log_text.see(tk.END)
-        self.log_text.insert(tk.END, "-" * 80 + "\n")
-        self.log_text.see(tk.END)
-        for seq, vid, res in results:
-            self.log_text.insert(tk.END, f"{seq:<5} {vid:<10} {res}\n")
-            self.log_text.see(tk.END)
-        self.log_text.insert(tk.END, "\n")
-        self.log_text.see(tk.END)
-    
-    def export_to_csv(self, results, filename="vote_results.csv"):
-        try:
-            with open(filename, "w", newline="", encoding="utf-8") as f:
-                writer = csv.writer(f)
-                writer.writerow(["序号", "ID", "结果"])
-                for row in results:
-                    writer.writerow(row)
-            self.log_text.insert(tk.END, f"结果已导出到 {filename}\n")
-            self.log_text.see(tk.END)
+            for pk, tid in votes_to_process:
+                if not self.is_running.is_set(): break
+                
+                tid = int(tid.strip())
+                acc = w3.eth.account.from_key(pk.strip())
+                
+                try:
+                    if task_type == "vote":
+                        self.execute_vote(w3, acc, tid, cfg)
+                    elif task_type == "claim":
+                        self.execute_claim(w3, acc, tid, cfg)
+                    elif task_type == "rebase":
+                        self.execute_rebase(w3, acc, tid, net)
+                except Exception as e:
+                    self.log_signal.emit(f"-> ID {tid} 异常: {e}")
+                
+            if self.is_running.is_set():
+                self.log_signal.emit("[*] 任务全部执行完毕。")
+            else:
+                self.log_signal.emit("[!] 任务已手动中止。")
+                
         except Exception as e:
-            self.log_text.insert(tk.END, f"导出 CSV 失败: {e}\n")
-            self.log_text.see(tk.END)
+            self.log_signal.emit(f"[!] 运行错误: {e}")
+            
+        self.toggle_btns(True)
+
+    def execute_vote(self, w3, acc, tid, cfg):
+        target_text = self.target_addr_label.text()
+        if "0x" not in target_text: 
+            self.log_signal.emit("[!] 请先粘贴正确的 Data 解析出地址。")
+            self.is_running.clear()
+            return
+            
+        target = target_text.split(": ")[1]
+        
+        selector = "0x7ac09bf7"
+        data = selector + hex(tid)[2:].zfill(64) + \
+               "0000000000000000000000000000000000000000000000000000000000000060" + \
+               "00000000000000000000000000000000000000000000000000000000000000a0" + \
+               "0000000000000000000000000000000000000000000000000000000000000001" + \
+               target[2:].zfill(64) + \
+               "0000000000000000000000000000000000000000000000000000000000000001" + \
+               "0000000000000000000000000000000000000000000000000000000000000064"
+
+        self.send_tx(w3, acc, cfg["vote_contract"], data, f"投票 ID {tid}")
+
+    def execute_claim(self, w3, acc, tid, cfg):
+        self.log_signal.emit(f"[*] 扫描 ID {tid} 奖励...")
+        
+        reward_sources = cfg.get("reward_contracts", [])
+        tokens_to_scan = cfg.get("common_tokens", [])
+        
+        if not reward_sources or not tokens_to_scan:
+            self.log_signal.emit(f"[!] 警告: config.json 中未配置 reward_contracts 或 common_tokens")
+            return
+            
+        _bribes, _tokens = [], []
+        for src in reward_sources:
+            if not self.is_running.is_set(): break
+            
+            src_addr = Web3.to_checksum_address(src)
+            found = []
+            
+            for t in tokens_to_scan:
+                if not self.is_running.is_set(): break
+                
+                try:
+                    c = w3.eth.contract(address=src_addr, abi=ABI_EARNED)
+                    if c.functions.earned(Web3.to_checksum_address(t), tid).call() > 0:
+                        found.append(Web3.to_checksum_address(t))
+                        
+                    # 防限流机制：每次查询后休息 0.1 秒
+                    time.sleep(0.1) 
+                except Exception as e: 
+                    continue
+                    
+            if found:
+                _bribes.append(src_addr)
+                _tokens.append(found)
+
+        if _bribes and self.is_running.is_set():
+            voter_c = w3.eth.contract(address=Web3.to_checksum_address(cfg["vote_contract"]), abi=ABI_CLAIM)
+            tx_data = voter_c.encode_abi("claimBribes", [_bribes, _tokens, tid])
+            self.send_tx(w3, acc, cfg["vote_contract"], tx_data, f"领取奖励 ID {tid}")
+        elif not _bribes and self.is_running.is_set():
+            self.log_signal.emit(f"-> ID {tid}: 无余额。")
+
+    def execute_rebase(self, w3, acc, tid, net):
+        rebase_addr = "0x227f65131a261548b057215bb1d5ab2997964c7d" if net == "Base" else "0x9d4736ec60715e71afe72973f7885dcbc21ea99b"
+        data = "0x379607f5" + hex(tid)[2:].zfill(64)
+        self.send_tx(w3, acc, rebase_addr, data, f"Rebase ID {tid}")
+
+    def send_tx(self, w3, acc, to, data, desc):
+        try:
+            tx = {
+                'to': Web3.to_checksum_address(to),
+                'data': data,
+                'from': acc.address,
+                'nonce': w3.eth.get_transaction_count(acc.address),
+                'gasPrice': w3.eth.gas_price,
+                'chainId': w3.eth.chain_id
+            }
+            gas = self.gas_input.text()
+            tx['gas'] = int(gas) if gas else int(w3.eth.estimate_gas(tx) * 1.2)
+            signed = w3.eth.account.sign_transaction(tx, acc.key)
+            tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
+            self.log_signal.emit(f"-> {desc}: [成功] {tx_hash.hex()}")
+        except Exception as e:
+            self.log_signal.emit(f"-> {desc}: [失败] {e}")
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = VoteGUI(root)
-    root.mainloop()
+    app = QApplication(sys.argv)
+    window = Ve33Tools()
+    window.show()
+    sys.exit(app.exec())
