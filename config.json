@@ -1,177 +1,33 @@
 {
   "networks": {
     "Base": {
-      "vote_contract": "0x16613524e02ad97eDfeF371bC883F2F5d6C480A5",
-      "rpc_url": "https://mainnet.base.org",
-      "bribe_voting_rewards": {
-        "BribeVotingReward1": "0xaf1fdaa8bb14be7277e2c10f6c79a4c31e91261c",
-        "BribeVotingReward2": "0xb7699e22ece5178c7abd3f1d2e2661bf75cfb316",
-        "BribeVotingReward3": "0xd6a164905a05bcf4fa0b658a23c92882da66ac19",
-        "BribeVotingReward4": "0x685b5173e002b2ec55a8cd02c74d5ee77043eb1e",
-        "BribeVotingReward5": "0xb30f5119022ed23267f5680b6b0cbf8c84598106",
-        "BribeVotingReward6": "0xf6a131d91ea1be48f5e702c5f74806e0299a4941",
-        "BribeVotingReward7": "0x1007b52921268b7ff21a6889210305b552aabe3c",
-        "BribeVotingReward8": "0xf317c3789130226b9f5b0bba6be193bd4aca57bc",
-        "BribeVotingReward9": "0x137357280635e3381914fcd9c8d63c8098cc2a2d",
-        "BribeVotingReward10": "0xc5a2584d87a12d3d9eb8927f48020f41cfb9aeab",
-        "BribeVotingReward11": "0xae507c81432219593591534667729bef116cfd5d",
-        "BribeVotingReward12": "0x8a30c350df42c1ba7053d6f4dd06e5af15121a3b",
-        "BribeVotingReward13": "0xb29a149ae8b228476a56ae1f566a636f60874cba",
-        "BribeVotingReward14": "0x96366092938770315cee0aa285d7b51fc1006c50",
-        "BribeVotingReward15": "0x337292ea9b99d6a429be105d01dd7f85cdb48d23",
-        "BribeVotingReward16": "0x62d0e505e0232d0c9830ba5fcd96f692471e563b",
-        "BribeVotingReward17": "0xe1e4637738e575f90d02b3fa18b55373dc510522",
-        "BribeVotingReward18": "0xbc716d467bf34afee87e965f3bc3cb116b9a7be2",
-        "BribeVotingReward19": "0x99b558d86a5ef67065e5b117b3260abe46703ed5",
-        "BribeVotingReward20": "0x858b4ea9d7e068ad5f477d9d5e45c21e80567b66",
-        "BribeVotingReward21": "0x1517d2a5b807eda5017eeadecac7162366588f57",
-        "BribeVotingReward22": "0x854929f597f718af81d4c14098fe9874b8570379",
-        "BribeVotingReward23": "0x5a353afd3c499a1231b5b143b0d2c6f4e72d1bf9",
-        "BribeVotingReward24": "0xcA32bDB6E2eCC323004510f98Cd55Bd201125C45",
-        "BribeVotingReward25": "0xD6a164905A05BcF4FA0B658A23C92882da66aC19",
-        "BribeVotingReward26": "0x685b5173e002B2eC55A8cd02C74d5ee77043Eb1e",
-        "BribeVotingReward27": "0xa06e3cba46a451674dfff4724efaa4edcc988d8c",
-        "BribeVotingReward28": "0x57c5dda10e4e8aa9f52b9ce88505cd3cdffe6f34",
-        "BribeVotingReward29": "0xb0ae851f3c1e8cf676c794d80df55298bdab2901",
-        "BribeVotingReward30": "0xb7699e22ece5178c7abd3f1d2e2661bf75cfb316",
-        "BribeVotingReward31": "0x9f697145398eCe21e6cF97F5781F84E860be861d",
-        "BribeVotingReward32": "0x3b88d51f5837f7fd995c7f68f3ab4968bf0f722d",
-        "BribeVotingReward33": "0x38051DA7Caa46cB40C84F98dCEbfd17F0624adD9",
-        "BribeVotingReward34": "0xf317c3789130226b9f5b0bba6be193bd4aca57bc",
-        "BribeVotingReward35": "0x0805fa2cc506bb334e5d91488c451610ee7531be",
-        "BribeVotingReward35": "0x0Fe99d5A9adeA52bc8A03037a4D13574dE0E484F"
-      },
-      "fees_voting_rewards": {
-        "FeesVotingReward1": "0x7798c136e0c000b8bffdc2fe4e208039320f0b62",
-        "FeesVotingReward2": "0x765d935c2f47a06eda55d07a9b9ae4108f4bbf85",
-        "FeesVotingReward3": "0x4706d84ce4d2c515d69543a4399ed637a10de869",
-        "FeesVotingReward4": "0x48300e424e91cdb2cfc0b0b2f82ca015bb7b4407",
-        "FeesVotingReward5": "0xfcb9b6983ae4ef935bf482b26de54e6ca16aea1f",
-        "FeesVotingReward6": "0xf7bcdbcfc66793b019be121800282da62f7925d7",
-        "FeesVotingReward7": "0xe5bfd74792d553d63bb0c89053561988cb9b4804",
-        "FeesVotingReward8": "0xd351e453b28dac29c917939ed04416c42ad063ae",
-        "FeesVotingReward9": "0x436369d91feafb5bc033dcb6e79a2fceeb037f0a",
-        "FeesVotingReward10": "0xa2eded6ee17af8debf70a1e93ac66e60dbfaaf33",
-        "FeesVotingReward11": "0x2e01828800e00b3a2ba214a7f2c8e25c65fb4894",
-        "FeesVotingReward12": "0x62c17d60c3ea7e5f2a4232da9e9095a412c6e2b8",
-        "FeesVotingReward13": "0x1e18274e108ebb98131eb3ad5f849259dcf1974a",
-        "FeesVotingReward14": "0x1f17b5c546f7ad1de4ae417f0a4c87913a09e772",
-        "FeesVotingReward15": "0x1e18274e108ebb98131eb3ad5f849259dcf1974a",
-        "FeesVotingReward16": "0xf2678d06ae88e19bdd5d66dea07d0f1987ea3275",
-        "FeesVotingReward18": "0x911fdd89da401a30940d67a9afa817c820512bd7",
-        "FeesVotingReward19": "0x890c0273e3167c235da68808aa4631d174f251fb",
-        "FeesVotingReward20": "0xBeE923e21709caCab4209C3ac1276f47f82B6E86",
-        "FeesVotingReward21": "0x2993999d10f986ddc6287f318ef19c2a97764cde",
-        "FeesVotingReward22": "0xab499b0bbc2ecb780b12eb2242962ff7caa75b01",
-        "FeesVotingReward23": "0xb2363aab1ed8972a33e7657d780f2714d73446df",
-        "FeesVotingReward24": "0x53bea32939821bcaad9b1103b932f2ee54c58ab4",
-        "FeesVotingReward25": "0x12e534a5ca18e0077b7b7b5fa104a36df90d6641",
-        "FeesVotingReward26": "0x033a629a174b31bd57f15310cc453f0c3c9b8b35",
-        "FeesVotingReward27": "0xe2f14c1ffa00d00606ffb0e5409163ccc400857b",
-        "FeesVotingReward28": "0xee484bf55625eec4dba1e1c9d1e5b37827242f07",
-        "FeesVotingReward29": "0x9dc0ab01272393f6038eb2b23c3bb543711568bb",
-        "FeesVotingReward30": "0xc57dfa730f6a6685c819a99cfca2c56d73e9a94c",
-        "FeesVotingReward31": "0x694e46c43f8cbd5c7b4a7b6c0978ce4eecde9f93",
-        "FeesVotingReward32": "0xb4b02952d8bcd82f2900aabe34a79ba95aa8c75c",
-        "FeesVotingReward33": "0xbdbd7de6a9721ffddb540f3208759f63284a3f56",
-        "FeesVotingReward34": "0xf6015ca0f019d0ba488d4042d6da96adc4cfef60",
-        "FeesVotingReward35": "0x6948d4cdf9efacfdfd9ee5ef416c8abcf6982293",
-        "FeesVotingReward36": "0x8c6743058cfe06f18ccc19a5480568588980faea",
-        "FeesVotingReward37": "0xbcf8a52c97a445dfb127e65c9eb5a8a85904c5e7",
-        "FeesVotingReward38": "0x81f091Fe45AF26279458dbf5743BA263c5eaE98E",
-        "FeesVotingReward39": "0x001ea40e4002126754a2ce18f789302c88561847",
-        "FeesVotingReward40": "0x04fc1a6a79fd2deefd571134aa99562459b0c5ed",
-        "FeesVotingReward41": "0xB2b05ec2cDd0c19D5cED639Ad3E07d92652A92EE",
-        "FeesVotingReward42": "0x6293734a8c2f79ad817a2ae8253da42797ca0d2a",
-        "FeesVotingReward43": "0xd5db3b0d9027e84324a1b7df753668bce122f151",
-        "FeesVotingReward44": "0x70569c03fd159dc67CE038D27756BCd09f23cc34",
-        "FeesVotingReward45": "0xd12a919c64395e91ff0cacf56a0e91228c0f4456",
-        "FeesVotingReward46": "0xD8Bd48A179Ef9Bc59D01a2D207cd5fE89914798B",
-        "FeesVotingReward47": "0x605297aeBD1bb0E763bD2b97e844d492520FB167",
-        "FeesVotingReward48": "0x73eEEf54Fc060bE066c4D43883658689A584450C",
-        "FeesVotingReward49": "0xdf53df857068073f0a73c9fe1aed746485eb4c9a",
-        "FeesVotingReward50": "0x436369d91feafb5bc033dcb6e79a2fceeb037f0a"
-      }
+      "vote_contract": "0x16613524e02ad97eDfeF371bC883F2F5d6C480A5", // Base链Voter合约
+      "rpc_url": "https://mainnet.base.org", // RPC节点
+      "reward_contracts": [
+        "0xd3632669f8B5a1Fb1a28cc5C94B2B3A9c54f2e31", // cbBTC-EDGE LP
+        "0xB2363AAb1Ed8972a33E7657d780F2714D73446DF", // cbBTC-WETH LP
+        "0x1D9848C5064197F04074B366d1dC8e8085D54e30", // virtual-WETH LP
+        "0x765d935C2F47a06EdA55D07a9b9aE4108F4BBF85" // USDC-WETH LP
+      ],
+      "common_tokens": [
+        "0x94017f147b58f879d220001f270060f333e80f62", // AERO
+        "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913", // USDC
+        "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf", // cbBTC
+        "0x4200000000000000000000000000000000000006" // WETH
+      ]
     },
     "OP": {
-      "vote_contract": "0x41c914ee0c7e1a5edcd0295623e6dc557b5abf3c",
-      "rpc_url": "https://mainnet.optimism.io",
-      "bribe_voting_rewards": {
-        "BribeVotingReward1": "0xd57e9480234f2ac9321a48d875688827d2271451",
-        "BribeVotingReward2": "0xbc636c8fbbc6b8aaa79a86b437c7bb575cffedf4",
-        "BribeVotingReward3": "0x07ffde14ceaade84164fd8fea876aebdcb079362",
-        "BribeVotingReward4": "0x6265ec90e28b8ffd9aa8bd66786bceb9dc62d9bb",
-        "BribeVotingReward5": "0xa96cdae0dfd4915b27c57f8abb5b615c1ed2be17",
-        "BribeVotingReward6": "0x0aff6991dfd071bd7d2f8e676513ee82041aeece",
-        "BribeVotingReward7": "0xdca005fc46324d437d8ab1960dd34f74c8e04b1d",
-        "BribeVotingReward8": "0xca0321a079add1e8c5d609119e5f733ebb3fcc1a",
-        "BribeVotingReward9": "0xdc5579580eecce716e78536701c3421b5c311856",
-        "BribeVotingReward10": "0x2b322ace61352f2e39a5c0377c7d23239d23522c",
-        "BribeVotingReward11": "0x7b3b591b463713a69b6dd25083a1ae2380bfb2f5",
-        "BribeVotingReward12": "0x997e1919d50273ee6e2eb28fc424b7dbe2db95ac",
-        "BribeVotingReward13": "0xe8ac34fc43199f6e3ad1074832c4f1cf3580bff8",
-        "BribeVotingReward14": "0x1c0a24be6a606b398b46a791688f5dcf8f4d4b84",
-        "BribeVotingReward15": "0x5570016ded752fb0e6a54b8163f15ed1d71bacca",
-        "BribeVotingReward16": "0xa185b3ce8384dba7b0cd5b49c73a6fe6beba5d3c",
-        "BribeVotingReward17": "0x54abF7FCA251A1137fCd681C7f26d95A1ACa93B0",
-        "BribeVotingReward18": "0xcbc3bd07c36d7822570be6af4f78535fca1a0744",
-        "BribeVotingReward19": "0x54abF7FCA251A1137fCd681C7f26d95A1ACa93B0",
-        "BribeVotingReward20": "0xDc631EdE18df7A123C22f36E3c1Ca1ECF9E3bB1e",
-        "BribeVotingReward21": "0x35bc3771fa886b1de646f76f05a80f8e345d7424",
-        "BribeVotingReward22": "0x6e28De95D11A8190bEc48712c6a98BD17d1C5f14",
-        "BribeVotingReward23": "0x8d6878faba220465caba71da3dd5341ee113a7c0"
-      },
-      "fees_voting_rewards": {
-        "FeesVotingReward1": "0x9291e1e76561749af097f86b02c39f603f60d910",
-        "FeesVotingReward2": "0x0206a52dec1ae97a06871a1353d5f47a3491b204",
-        "FeesVotingReward3": "0x35a55a24ef7da2dc6aeb65d762cec96608fc4df6",
-        "FeesVotingReward4": "0xb983bf6d65ef216683ce9faf07639f905438685d",
-        "FeesVotingReward5": "0x68051f9847ead8cf9c9d6bf918946f56d7827e7d",
-        "FeesVotingReward6": "0xe615e38763ee2d66f032185d7e1e83f5941b55af",
-        "FeesVotingReward7": "0x083e1e81c30022e40e78733db1be8c8435b88197",
-        "FeesVotingReward8": "0x52024b77c35d0ef2366ae56f0652dde56201bf53",
-        "FeesVotingReward9": "0x3431d4ca6933bccca4e87165ba0b52326b162434",
-        "FeesVotingReward10": "0x6e8ddc75050a0691d9d2b868d3921a6f5e7afd7f",
-        "FeesVotingReward11": "0xc3955e4c89bb39df06e13af89d1cb869279e4655",
-        "FeesVotingReward12": "0x3c87d2a2ac8cf9bb2b448e5ba6c3aaf877acfb3f",
-        "FeesVotingReward13": "0xea8c82d29ae8e7c5c90b44494ca51b02fc4cea9c",
-        "FeesVotingReward14": "0x6a73f3aefa631de55691d9c145bfc72e46757228",
-        "FeesVotingReward15": "0x493186b56a24ef080cbd07fee93d2b0cc0c2b7ce",
-        "FeesVotingReward16": "0xd99c51c481ad25cb77501aae878f8b5c957b8c1a",
-        "FeesVotingReward17": "0xd60233c420648d238c46c20daaa772c8d8a70b77",
-        "FeesVotingReward18": "0xc292e4f6b9a00d8879cf106e832d8dc401b95046",
-        "FeesVotingReward19": "0x87b2163f6ae2c404edab51ce75e0c3a57162d20d",
-        "FeesVotingReward20": "0xee1edff310abc961a34b86029c0912fb2728b9d4",
-        "FeesVotingReward21": "0xb623c217adcd0eac3a8321a7afae5b49e3b617bb",
-        "FeesVotingReward22": "0x4bf5bfdc6d18641f085c4ef530ee0ddd9ac45c26",
-        "FeesVotingReward23": "0x0edc1c2d5abcbf4d8a67609d3d4b96d438da9f59",
-        "FeesVotingReward24": "0xe5a5eb2b3e63929900e62ccd53906d93bbc22c52",
-        "FeesVotingReward25": "0xed33eab6796e058411fc11563a00608d810d258f",
-        "FeesVotingReward26": "0x57edef94ec07f078fc7072a15f9de829e3ee520d",
-        "FeesVotingReward27": "0x71d8c2d3d824ADFEA809C666E5d3B2F142629474",
-        "FeesVotingReward28": "0x3ecaad2d3996df95d415d4c1c0f7587b22dbd901",
-        "FeesVotingReward29": "0x04bafba6fc2419f7d0930296829c57eabee30ad1",
-        "FeesVotingReward30": "0x9abfd4c49b1f7fcb21d1d191837bc242ac2d3b1f",
-        "FeesVotingReward31": "0xe1a45b4f85e096aea4e014222936c52ea84f8097",
-        "FeesVotingReward32": "0x7bf3f583f6c0a3173b44b149c5425f63d2321e02",
-        "FeesVotingReward33": "0x7a596300094972e7ce9a9961cbf139c8329ce5b9",
-        "FeesVotingReward34": "0xc8e447464adf067068fc75238ac9e9a4fd944bcc",
-        "FeesVotingReward35": "0x7A67D98C71Ca627547c191d8C32d1bcD4d36d823",
-        "FeesVotingReward36": "0x8D2F3598Bbb2E10659F8Afb42c33730Fc3e49648",
-        "FeesVotingReward37": "0x2a81eAB3e6eD346D969b3099c54487fD4aFC8712",
-        "FeesVotingReward38": "0x6Cd21fb6c4419a36FDFd5aeEde4bD63a1c61F8AB",
-        "FeesVotingReward39": "0x23D8fc79E890dA325033Adc1EEBc34a720560606",
-        "FeesVotingReward40": "0x4073e0F518F11909dBF621E162B465432AABFB0a",
-        "FeesVotingReward41": "0xB3222eF61915AF116b8A051659D1861a18300BD0",
-        "FeesVotingReward42": "0x5B4aC2BC65a862842816dCacE6cF22219CD9E809",
-        "FeesVotingReward43": "0x10b854B1cbD7461cBCE23E14417e1BC865B6ac70",
-        "FeesVotingReward44": "0x4F0F14f8a235489aF1A9b7f1B8AD135d82c53Cf3",
-        "FeesVotingReward45": "0xd8F8aAfaC7fa831e00d89B872F4B39390Fa463dF",
-        "FeesVotingReward46": "0xd63f929E690C281782e2aB19fE0a262AFc34E3c4",
-        "FeesVotingReward47": "0x8E49113f275A24a851368aafC6125250134cCFA9",
-        "FeesVotingReward48": "0x9abfd4c49b1f7fcb21d1d191837bc242ac2d3b1f",
-        "FeesVotingReward48": "0x691298f2ea06a6324167541907a9eef2ec1b5a65"
-      }
+      "vote_contract": "0x41c914ee0c7e1a5edcd0295623e6dc557b5abf3c", // OP链Voter合约
+      "rpc_url": "https://mainnet.optimism.io", // RPC节点
+      "reward_contracts": [
+        "0x68051f9847ead8Cf9C9D6bF918946F56d7827E7D", // USDC-WETH LP
+        "0xF1f0928580aE099d661474FCe70dFf006fdbfFc0" // USDC-VELO LP
+      ],
+      "common_tokens": [
+        "0x4200000000000000000000000000000000000006", // WETH
+        "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85", // USDC
+        "0x9560e827aF36c94D2Ac33a39bCE1Fe78631088Db" // VELO
+      ]
     }
   }
 }
