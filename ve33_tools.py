@@ -4,6 +4,7 @@ import threading
 import time
 import re
 import random
+import csv
 from PyQt6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -38,12 +39,13 @@ class Ve33Tools(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Ve33 Tools Professional - voteok Logic Edition")
+        self.setWindowTitle("Ve33 Tools Professional")
         self.resize(980, 640)
         self.is_running = threading.Event()
         self.receipt_timeout = 180
         self.last_logged_parsed_address = None
         self.last_parse_error = None
+        self.failed_records = []
 
         self.log_signal.connect(self.append_log)
 
@@ -154,7 +156,7 @@ class Ve33Tools(QMainWindow):
         data = self.data_input.toPlainText().strip()
         return re.sub(r'\s+', '', data)
 
-    # 完全对齐 voteok.py 的解析逻辑：只解析目标地址，不复用整段原始 data
+    # 解析逻辑：只解析目标地址，不复用整段原始 data
     def parse_vote_target_address(self):
         data = self.get_clean_vote_data()
         if not data.lower().startswith(FUNCTION_SELECTOR):
@@ -184,7 +186,7 @@ class Ve33Tools(QMainWindow):
         address = '0x' + addr_hex[24:]
         return Web3.to_checksum_address(address)
 
-    # 完全对齐 voteok.py 的投票 calldata 生成逻辑
+    #  calldata 生成逻辑
     def build_vote_calldata(self, vote_id, address):
         vote_id_hex = hex(vote_id)[2:].zfill(64)
         address_padded = "000000000000000000000000" + address[2:]
@@ -202,6 +204,11 @@ class Ve33Tools(QMainWindow):
         return calldata
 
     def auto_parse_vote_address(self):
+        """
+        自动解析只负责“能解析就提示成功”。
+        不在 textChanged 过程中输出失败日志，避免 OP 标准 inputdata / 粘贴过程中的中间状态造成误报。
+        真正点击批量投票时，execute_vote() 会严格拦截无效 Data。
+        """
         data = self.get_clean_vote_data()
         if not data:
             self.last_logged_parsed_address = None
@@ -213,12 +220,10 @@ class Ve33Tools(QMainWindow):
                 self.log_signal.emit(f"[*] 已解析投票地址: {parsed}")
                 self.last_logged_parsed_address = parsed
             self.last_parse_error = None
-        except Exception as e:
-            err = str(e)
-            self.last_logged_parsed_address = None
-            if err != self.last_parse_error:
-                self.log_signal.emit(f"[!] 投票 Data 解析失败: {err}")
-                self.last_parse_error = err
+        except Exception:
+            # 粘贴/编辑过程中不输出错误；避免“已解析地址”同时又出现“解析失败”的混乱日志。
+            # 如果用户直接开始投票，execute_vote() 会输出明确错误并停止。
+            return
 
     def stop_task(self):
         self.is_running.clear()
@@ -259,6 +264,7 @@ class Ve33Tools(QMainWindow):
     def run_worker(self, task_type):
         net = "Base" if self.rb_base.isChecked() else "OP"
         stats = {"success": 0, "failed": 0, "pending": 0, "skipped": 0}
+        self.failed_records = []
         try:
             cfg = self.config["networks"][net]
             w3 = Web3(Web3.HTTPProvider(cfg["rpc_url"]))
@@ -268,29 +274,49 @@ class Ve33Tools(QMainWindow):
             self.log_signal.emit("[*] 已随机打乱钱包顺序，准备执行任务...")
 
             total = len(votes_to_process)
-            for idx, (pk, tid) in enumerate(votes_to_process, start=1):
+            for idx, row in enumerate(votes_to_process, start=1):
                 if not self.is_running.is_set():
                     break
 
-                tid = int(tid.strip())
-                acc = w3.eth.account.from_key(pk.strip())
+                pk = row[0].strip() if len(row) > 0 else ""
+                tid_raw = row[1].strip() if len(row) > 1 else ""
+                acc = None
+                tid = None
                 result = "failed"
-                self.log_signal.emit(f"\n[*] 处理进度 {idx}/{total} | 地址 {acc.address} | tokenId={tid}")
+                reason = "未知错误"
 
                 try:
+                    tid = int(tid_raw)
+                    acc = w3.eth.account.from_key(pk)
+                    self.log_signal.emit(f"\n[*] 处理进度 {idx}/{total} | 地址 {acc.address} | tokenId={tid}")
+
                     if task_type == "vote":
-                        result = self.execute_vote(w3, acc, tid, cfg)
+                        result, reason = self.execute_vote(w3, acc, tid, cfg)
                     elif task_type == "claim":
-                        result = self.execute_claim(w3, acc, tid, cfg)
+                        result, reason = self.execute_claim(w3, acc, tid, cfg)
                     elif task_type == "rebase":
-                        result = self.execute_rebase(w3, acc, tid, net)
+                        result, reason = self.execute_rebase(w3, acc, tid, net)
+                    else:
+                        result, reason = "failed", f"未知任务类型: {task_type}"
+
                 except Exception as e:
-                    self.log_signal.emit(f"-> ID {tid} 异常: {e}")
-                    result = "failed"
+                    result, reason = "failed", str(e)
+                    show_addr = acc.address if acc else self.mask_private_key(pk)
+                    self.log_signal.emit(f"-> 地址/ID 处理异常 | 地址/私钥={show_addr} | tokenId={tid_raw} | {reason}")
 
                 if result not in stats:
                     result = "failed"
                 stats[result] += 1
+
+                if result in ("failed", "pending"):
+                    self.record_problem_address(
+                        task_type=task_type,
+                        network=net,
+                        address=acc.address if acc else self.mask_private_key(pk),
+                        token_id=tid if tid is not None else tid_raw,
+                        status=result,
+                        reason=reason,
+                    )
 
                 if idx < total and self.is_running.is_set():
                     delay_seconds = self.get_wallet_delay_seconds()
@@ -303,6 +329,7 @@ class Ve33Tools(QMainWindow):
                 f"待确认 {stats['pending']} / 跳过 {stats['skipped']}"
             )
             self.log_signal.emit(summary)
+            self.output_problem_addresses(task_type, net)
             if self.is_running.is_set():
                 self.log_signal.emit("[*] 任务全部执行完毕。")
             else:
@@ -312,6 +339,42 @@ class Ve33Tools(QMainWindow):
             self.log_signal.emit(f"[!] 运行错误: {e}")
 
         self.toggle_btns(True)
+
+    def mask_private_key(self, pk):
+        if not pk:
+            return "空私钥"
+        return pk[:8] + "..." + pk[-6:] if len(pk) > 16 else pk
+
+    def record_problem_address(self, task_type, network, address, token_id, status, reason):
+        self.failed_records.append({
+            "task": task_type,
+            "network": network,
+            "address": address,
+            "token_id": token_id,
+            "status": status,
+            "reason": str(reason),
+        })
+
+    def output_problem_addresses(self, task_type, network):
+        if not self.failed_records:
+            self.log_signal.emit("[*] 本次没有失败/待确认地址。")
+            return
+
+        self.log_signal.emit("\n[!] 本次失败/待确认地址明细：")
+        for item in self.failed_records:
+            self.log_signal.emit(
+                f"- [{item['status']}] {item['address']} | tokenId={item['token_id']} | 原因: {item['reason']}"
+            )
+
+        filename = f"{task_type}_{network.lower()}_problem_addresses.csv"
+        try:
+            with open(filename, "w", newline="", encoding="utf-8-sig") as f:
+                writer = csv.DictWriter(f, fieldnames=["task", "network", "address", "token_id", "status", "reason"])
+                writer.writeheader()
+                writer.writerows(self.failed_records)
+            self.log_signal.emit(f"[!] 失败/待确认地址已独立导出: {filename}")
+        except Exception as e:
+            self.log_signal.emit(f"[!] 导出失败地址 CSV 失败: {e}")
 
     def sleep_with_stop(self, seconds):
         end_at = time.time() + seconds
@@ -325,9 +388,9 @@ class Ve33Tools(QMainWindow):
         except Exception as e:
             self.log_signal.emit(f"[!] 请先粘贴正确的投票 Data：{e}")
             self.is_running.clear()
-            return "skipped"
+            return "skipped", f"投票 Data 无效: {e}"
 
-        self.log_signal.emit(f"[*] 投票 ID {tid}: 目标地址 {target}，投票权重：100")
+        self.log_signal.emit(f"[*] 投票 ID {tid}: 目标地址 {target}，投票权重 100%")
         return self.send_tx(w3, acc, cfg["vote_contract"], data, f"投票 ID {tid}")
 
     def execute_claim(self, w3, acc, tid, cfg):
@@ -338,7 +401,7 @@ class Ve33Tools(QMainWindow):
 
         if not reward_sources or not tokens_to_scan:
             self.log_signal.emit("[!] 警告: config.json 中未配置 reward_contracts 或 common_tokens")
-            return "skipped"
+            return "skipped", "config.json 中未配置 reward_contracts 或 common_tokens"
 
         _bribes, _tokens = [], []
         query_errors = 0
@@ -380,14 +443,14 @@ class Ve33Tools(QMainWindow):
             return self.send_tx(w3, acc, cfg["vote_contract"], tx_data, f"领取奖励 ID {tid}")
 
         if not self.is_running.is_set():
-            return "skipped"
+            return "skipped", "任务已手动中止"
 
         if query_errors > 0:
             self.log_signal.emit(f"-> ID {tid}: [扫描异常] 未发现可领取奖励，但有 {query_errors} 个查询失败")
-            return "failed"
+            return "failed", f"扫描异常：{query_errors} 个查询失败"
 
         self.log_signal.emit(f"-> ID {tid}: 无余额。")
-        return "skipped"
+        return "skipped", "无可领取余额"
 
     def execute_rebase(self, w3, acc, tid, net):
         rebase_addr = "0x227f65131a261548b057215bb1d5ab2997964c7d" if net == "Base" else "0x9d4736ec60715e71afe72973f7885dcbc21ea99b"
@@ -395,49 +458,96 @@ class Ve33Tools(QMainWindow):
         return self.send_tx(w3, acc, rebase_addr, data, f"Rebase ID {tid}")
 
     def send_tx(self, w3, acc, to, data, desc):
-        try:
-            tx = {
-                'to': Web3.to_checksum_address(to),
-                'value': 0,
-                'data': data,
-                'from': acc.address,
-                'nonce': w3.eth.get_transaction_count(acc.address),
-                'gasPrice': w3.eth.gas_price,
-                'chainId': w3.eth.chain_id,
-            }
-            gas = self.gas_input.text().strip()
-            tx['gas'] = int(gas) if gas else int(w3.eth.estimate_gas(tx) * 1.2)
-            signed = w3.eth.account.sign_transaction(tx, acc.key)
-            tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
-            tx_hex = tx_hash.hex()
-            self.log_signal.emit(f"-> {desc}: [已广播] {tx_hex}，等待链上确认...")
+        """
+        默认最多尝试 3 次。
+        - receipt.status == 1：成功，停止。
+        - receipt.status == 0：链上失败/回滚，不重试。
+        - 其他异常/超时/RPC问题：重试，且每次都重新读取 nonce、gasPrice、estimate_gas。
+        """
+        max_attempts = 3
+        last_reason = "未知错误"
+        tx_hashes = []
 
-            receipt = w3.eth.wait_for_transaction_receipt(
-                tx_hash,
-                timeout=self.receipt_timeout,
-                poll_latency=2,
-            )
+        for attempt in range(1, max_attempts + 1):
+            if not self.is_running.is_set():
+                return "skipped", "任务已手动中止"
 
-            if receipt.status == 1:
-                self.log_signal.emit(
-                    f"-> {desc}: [链上成功] {tx_hex} | block={receipt.blockNumber} | gasUsed={receipt.gasUsed}"
+            try:
+                tx = {
+                    'to': Web3.to_checksum_address(to),
+                    'value': 0,
+                    'data': data,
+                    'from': acc.address,
+                    # 每次尝试都重新读取 pending nonce，避免使用过期 nonce
+                    'nonce': w3.eth.get_transaction_count(acc.address, 'pending'),
+                    # 每次尝试都重新读取最新 gas price
+                    'gasPrice': w3.eth.gas_price,
+                    'chainId': w3.eth.chain_id,
+                }
+
+                gas = self.gas_input.text().strip()
+                if gas:
+                    tx['gas'] = int(gas)
+                else:
+                    # 每次尝试都重新 estimate gas，再乘 1.2
+                    tx['gas'] = int(w3.eth.estimate_gas(tx) * 1.2)
+
+                if attempt > 1:
+                    self.log_signal.emit(
+                        f"-> {desc}: [重试 {attempt}/{max_attempts}] nonce={tx['nonce']} gasPrice={tx['gasPrice']} gas={tx['gas']}"
+                    )
+
+                signed = w3.eth.account.sign_transaction(tx, acc.key)
+                tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
+                tx_hex = tx_hash.hex()
+                tx_hashes.append(tx_hex)
+
+                self.log_signal.emit(f"-> {desc}: [已广播] {tx_hex}，等待链上确认...")
+
+                receipt = w3.eth.wait_for_transaction_receipt(
+                    tx_hash,
+                    timeout=self.receipt_timeout,
+                    poll_latency=2,
                 )
-                return "success"
 
-            self.log_signal.emit(
-                f"-> {desc}: [链上失败] {tx_hex} | block={receipt.blockNumber} | gasUsed={receipt.gasUsed}"
-            )
-            return "failed"
+                if receipt.status == 1:
+                    self.log_signal.emit(
+                        f"-> {desc}: [链上成功] {tx_hex} | block={receipt.blockNumber} | gasUsed={receipt.gasUsed}"
+                    )
+                    return "success", f"链上成功 | tx={tx_hex} | attempts={attempt}"
 
-        except TimeExhausted:
-            self.log_signal.emit(f"-> {desc}: [超时未确认] 已广播但在 {self.receipt_timeout}s 内未拿到回执")
-            return "pending"
-        except Exception as e:
-            err_text = str(e)
-            if isinstance(e.args, tuple) and e.args:
-                err_text = " | ".join(str(x) for x in e.args if x)
-            self.log_signal.emit(f"-> {desc}: [失败] {err_text}")
-            return "failed"
+                # status == 0 是明确链上回滚，不重试
+                self.log_signal.emit(
+                    f"-> {desc}: [链上失败，不重试] {tx_hex} | block={receipt.blockNumber} | gasUsed={receipt.gasUsed}"
+                )
+                return "failed", f"链上失败/交易回滚 | tx={tx_hex} | attempts={attempt}"
+
+            except TimeExhausted:
+                last_reason = f"超时未确认：{self.receipt_timeout}s 内未拿到回执"
+                self.log_signal.emit(f"-> {desc}: [超时] 第 {attempt}/{max_attempts} 次失败：{last_reason}")
+
+                if attempt < max_attempts:
+                    time.sleep(1)
+                    continue
+
+                reason = f"{last_reason} | attempts={max_attempts} | tx_hashes={';'.join(tx_hashes)}"
+                self.log_signal.emit(f"-> {desc}: [最终失败/待确认] {reason}")
+                return "pending", reason
+
+            except Exception as e:
+                err_text = str(e)
+                if isinstance(e.args, tuple) and e.args:
+                    err_text = " | ".join(str(x) for x in e.args if x)
+                last_reason = err_text
+                self.log_signal.emit(f"-> {desc}: [失败] 第 {attempt}/{max_attempts} 次：{err_text}")
+
+                if attempt < max_attempts:
+                    time.sleep(1)
+                    continue
+
+                reason = f"{last_reason} | attempts={max_attempts} | tx_hashes={';'.join(tx_hashes)}"
+                self.log_signal.emit(f"-> {desc}: [最终失败] {reason}")
+                return "failed", reason
 
 
 if __name__ == "__main__":
